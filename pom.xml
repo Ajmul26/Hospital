@@ -68,7 +68,77 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+                            </plugin>
+                
+                <!-- Veracode Maven Plugin -->
+                <plugin>
+                    <groupId>com.veracode.vosp.api.wrappers</groupId>
+                    <artifactId>veracode-maven-plugin</artifactId>
+                    <version>1.0</version>
+                    <configuration>
+                        <!-- Configuration will be handled via command line parameters -->
+                    </configuration>
+                </plugin>
+                
+                <!-- Veracode Software Composition Analysis (SCA) -->
+                <plugin>
+                    <groupId>org.cyclonedx</groupId>
+                    <artifactId>cyclonedx-maven-plugin</artifactId>
+                    <version>2.7.9</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>makeAggregateBom</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <projectType>library</projectType>
+                        <schemaVersion>1.4</schemaVersion>
+                        <includeBomSerialNumber>true</includeBomSerialNumber>
+                        <includeCompileScope>true</includeCompileScope>
+                        <includeProvidedScope>true</includeProvidedScope>
+                        <includeRuntimeScope>true</includeRuntimeScope>
+                        <includeSystemScope>true</includeSystemScope>
+                        <includeTestScope>false</includeTestScope>
+                        <includeLicenseText>false</includeLicenseText>
+                        <outputReactorProjects>true</outputReactorProjects>
+                        <outputFormat>json</outputFormat>
+                        <outputName>bom</outputName>
+                    </configuration>
+                </plugin>
+                
+                <!-- OWASP Dependency Check for local vulnerability scanning -->
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <version>8.4.0</version>
+                    <configuration>
+                        <outputDirectory>${project.build.directory}/dependency-check-report</outputDirectory>
+                        <format>ALL</format>
+                        <suppressionFiles>
+                            <suppressionFile>owasp-dependency-check-suppressions.xml</suppressionFile>
+                        </suppressionFiles>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </build>
+        
+        <!-- Profiles for different environments -->
+        <profiles>
+            <profile>
+                <id>veracode</id>
+                <properties>
+                    <veracode.app.name>spring-crud-h2-app</veracode.app.name>
+                </properties>
+            </profile>
+        </profiles>
+    </project>

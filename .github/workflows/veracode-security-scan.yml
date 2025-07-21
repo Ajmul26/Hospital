@@ -1,0 +1,279 @@
+name: Veracode Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run weekly security scans (every Sunday at 2 AM UTC)
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of scan to run'
+        required: true
+        default: 'pipeline'
+        type: choice
+        options:
+          - pipeline
+          - static
+          - dependency-check
+          - all
+
+env:
+  JAVA_VERSION: '17'
+  MAVEN_OPTS: '-Xmx3072m'
+  APP_NAME: 'spring-crud-h2-app'
+
+jobs:
+  # Build and prepare artifacts
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.upload.outputs.artifact-name }}
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Build with Maven
+      run: |
+        mvn clean compile test-compile
+        mvn package -DskipTests
+        
+    - name: Upload Build Artifacts
+      id: upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: spring-crud-h2-jar
+        path: target/*.jar
+        retention-days: 30
+
+  # OWASP Dependency Check
+  dependency-check:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type == 'dependency-check' || github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == ''
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Run OWASP Dependency Check
+      run: |
+        mvn org.owasp:dependency-check-maven:check
+        
+    - name: Upload Dependency Check Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dependency-check-report
+        path: target/dependency-check-report/
+        retention-days: 30
+        
+    - name: Parse Dependency Check Results
+      if: always()
+      run: |
+        if [ -f "target/dependency-check-report/dependency-check-report.json" ]; then
+          echo "Dependency check completed. Parsing results..."
+          vulnerabilities=$(jq '.dependencies[].vulnerabilities | length' target/dependency-check-report/dependency-check-report.json 2>/dev/null | awk '{sum+=$1} END {print sum+0}')
+          echo "Total vulnerabilities found: $vulnerabilities"
+          
+          if [ "$vulnerabilities" -gt 0 ]; then
+            echo "::warning::Found $vulnerabilities vulnerabilities in dependencies"
+          fi
+        fi
+
+  # Software Bill of Materials (SBOM) Generation
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Generate SBOM
+      run: |
+        mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
+        
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom
+        path: target/bom.json
+        retention-days: 90
+
+  # Veracode Pipeline Scan
+  veracode-pipeline-scan:
+    name: Veracode Pipeline Scan
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.inputs.scan_type == 'pipeline' || github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == ''
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: spring-crud-h2-jar
+        path: target/
+        
+    - name: Veracode Pipeline Scan
+      uses: veracode/Veracode-pipeline-scan-action@v1.0.12
+      with:
+        vid: ${{ secrets.VERACODE_API_ID }}
+        vkey: ${{ secrets.VERACODE_API_KEY }}
+        file: "target/spring-crud-h2-*.jar"
+        fail_build: false
+        
+    - name: Upload Pipeline Scan Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: pipeline-scan-results
+        path: results.json
+        retention-days: 30
+
+  # Veracode Static Analysis (Policy Scan)
+  veracode-static-scan:
+    name: Veracode Static Analysis
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.inputs.scan_type == 'static' || github.event.inputs.scan_type == 'all'
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: spring-crud-h2-jar
+        path: target/
+        
+    - name: Veracode Upload and Scan
+      uses: veracode/veracode-uploadandscan-action@0.2.6
+      with:
+        appname: ${{ env.APP_NAME }}
+        createprofile: true
+        filepath: 'target/spring-crud-h2-*.jar'
+        vid: ${{ secrets.VERACODE_API_ID }}
+        vkey: ${{ secrets.VERACODE_API_KEY }}
+        version: '${{ github.run_number }}-${{ github.sha }}'
+        criticality: 'High'
+        sandboxname: 'github-actions'
+        createsandbox: true
+        deleteincompletescan: true
+
+  # Security Results Summary
+  security-summary:
+    name: Security Scan Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-check, veracode-pipeline-scan, sbom]
+    if: always()
+    
+    steps:
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v4
+      
+    - name: Generate Security Summary
+      run: |
+        echo "# 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 📊 Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # OWASP Dependency Check Summary
+        if [ -f "dependency-check-report/dependency-check-report.json" ]; then
+          echo "### 🛡️ OWASP Dependency Check" >> $GITHUB_STEP_SUMMARY
+          vulnerabilities=$(jq '.dependencies[].vulnerabilities | length' dependency-check-report/dependency-check-report.json 2>/dev/null | awk '{sum+=$1} END {print sum+0}')
+          echo "- **Vulnerabilities Found**: $vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          echo "- **Report**: Available in artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Veracode Pipeline Scan Summary
+        if [ -f "pipeline-scan-results/results.json" ]; then
+          echo "### ⚡ Veracode Pipeline Scan" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Results**: Available in artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # SBOM Summary
+        if [ -f "sbom/bom.json" ]; then
+          echo "### 📋 Software Bill of Materials (SBOM)" >> $GITHUB_STEP_SUMMARY
+          components=$(jq '.components | length' sbom/bom.json 2>/dev/null || echo "0")
+          echo "- **Components Identified**: $components" >> $GITHUB_STEP_SUMMARY
+          echo "- **Format**: CycloneDX JSON" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "## 📁 Available Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- dependency-check-report: OWASP vulnerability report" >> $GITHUB_STEP_SUMMARY
+        echo "- pipeline-scan-results: Veracode pipeline scan results" >> $GITHUB_STEP_SUMMARY
+        echo "- sbom: Software Bill of Materials" >> $GITHUB_STEP_SUMMARY
+        echo "- spring-crud-h2-jar: Built application JAR" >> $GITHUB_STEP_SUMMARY
+
+  # Notify on failures
+  notify-failure:
+    name: Notify Security Issues
+    runs-on: ubuntu-latest
+    needs: [dependency-check, veracode-pipeline-scan]
+    if: failure()
+    
+    steps:
+    - name: Create Issue on Security Failure
+      if: github.event_name == 'schedule' || github.event_name == 'push'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: '🚨 Security Scan Failure - ' + new Date().toISOString().split('T')[0],
+            body: `## Security Scan Failure
+            
+            The automated security scan has failed. Please review the workflow logs and address any security issues.
+            
+            **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Commit**: ${{ github.sha }}
+            **Branch**: ${{ github.ref_name }}
+            
+            ### Next Steps
+            1. Review the workflow logs for specific failures
+            2. Check OWASP dependency scan results
+            3. Review Veracode scan findings
+            4. Address identified security issues
+            5. Re-run the security scan
+            
+            This issue was automatically created by the security scanning workflow.`,
+            labels: ['security', 'bug', 'high-priority']
+          })

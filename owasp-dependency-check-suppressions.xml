@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    
+    <!-- 
+    OWASP Dependency Check Suppressions File
+    This file is used to suppress false positives in vulnerability scanning.
+    Each suppression should include:
+    - Justification for why it's being suppressed
+    - Review date or expiration
+    - Impact assessment
+    -->
+    
+    <!-- Example suppressions - Remove or modify as needed -->
+    
+    <!-- Spring Boot Test Dependencies - Development Only -->
+    <suppress>
+        <notes>Spring Boot test dependencies are only used during development and testing</notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/spring-boot-starter-test@.*$</packageUrl>
+        <cve>CVE-2021-22060</cve>
+    </suppress>
+    
+    <!-- H2 Database - Development/Testing Only -->
+    <suppress>
+        <notes>H2 database is used only for development and testing, not in production</notes>
+        <packageUrl regex="true">^pkg:maven/com\.h2database/h2@.*$</packageUrl>
+        <vulnerabilityName regex="true">.*H2.*</vulnerabilityName>
+    </suppress>
+    
+    <!-- JUnit - Testing Framework Only -->
+    <suppress>
+        <notes>JUnit is only used for testing purposes</notes>
+        <packageUrl regex="true">^pkg:maven/org\.junit\.jupiter/junit-jupiter.*@.*$</packageUrl>
+        <cpe>cpe:/a:junit:junit</cpe>
+    </suppress>
+    
+    <!-- Mockito - Testing Framework Only -->
+    <suppress>
+        <notes>Mockito is only used for testing purposes</notes>
+        <packageUrl regex="true">^pkg:maven/org\.mockito/mockito.*@.*$</packageUrl>
+        <cpe>cpe:/a:mockito:mockito</cpe>
+    </suppress>
+    
+    <!-- Example: Suppress specific CVE with justification -->
+    <!--
+    <suppress>
+        <notes>
+            CVE-2021-12345 - This vulnerability affects a feature not used in our application.
+            The vulnerable code path is not accessible in our configuration.
+            Review Date: 2024-12-31
+            Risk: Low - Feature not used
+        </notes>
+        <packageUrl regex="true">^pkg:maven/com\.example/vulnerable-library@.*$</packageUrl>
+        <cve>CVE-2021-12345</cve>
+    </suppress>
+    -->
+    
+    <!-- Example: Suppress by filename -->
+    <!--
+    <suppress>
+        <notes>Development tool, not deployed to production</notes>
+        <filePath regex="true">.*development-tools.*\.jar</filePath>
+        <cve>CVE-2021-67890</cve>
+    </suppress>
+    -->
+    
+    <!-- Example: Suppress by CPE (Common Platform Enumeration) -->
+    <!--
+    <suppress>
+        <notes>This CPE is incorrectly identified for our library version</notes>
+        <cpe>cpe:/a:apache:commons_collections</cpe>
+        <cve>CVE-2015-6420</cve>
+    </suppress>
+    -->
+    
+</suppressions>

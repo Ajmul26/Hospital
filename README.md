@@ -13,6 +13,7 @@ A comprehensive Spring Boot application demonstrating CRUD (Create, Read, Update
 - ✅ Comprehensive test coverage
 - ✅ H2 Console for database inspection
 - ✅ Swagger/OpenAPI 3 documentation with interactive UI
+- ✅ Veracode security scanning integration (SAST, SCA, Pipeline Scan)
 
 ## Technology Stack
 
@@ -23,6 +24,8 @@ A comprehensive Spring Boot application demonstrating CRUD (Create, Read, Update
 - **Maven**
 - **JUnit 5**
 - **Swagger/OpenAPI 3** (SpringDoc)
+- **Veracode** (Security Scanning)
+- **OWASP Dependency Check** (Vulnerability Analysis)
 
 ## Project Structure
 
@@ -46,6 +49,8 @@ src/
 │   │   └── config/
 │   │       ├── DataInitializer.java         # Sample data setup
 │   │       └── OpenApiConfig.java           # Swagger/OpenAPI configuration
+│   ├── scripts/
+│   │   └── veracode-scan.sh                 # Security scanning script
 │   └── resources/
 │       └── application.properties           # Configuration
 └── test/
@@ -143,6 +148,28 @@ mvn spring-boot:run
 - **Swagger UI**: `http://localhost:8080/swagger-ui/index.html`
 - **OpenAPI Docs**: `http://localhost:8080/v3/api-docs`
 - H2 Console: `http://localhost:8080/h2-console`
+
+### Security Scanning
+
+Run local security scans using the provided script:
+
+```bash
+# Make script executable (first time only)
+chmod +x scripts/veracode-scan.sh
+
+# Run OWASP dependency check
+./scripts/veracode-scan.sh dependency-check
+
+# Run complete local security workflow
+./scripts/veracode-scan.sh full-scan
+
+# Upload for Veracode static analysis (requires credentials)
+./scripts/veracode-scan.sh static-scan -v YOUR_VID -k YOUR_VKEY
+```
+
+**Security Reports:**
+- OWASP Dependency Check: `target/dependency-check-report/`
+- Software Bill of Materials: `target/bom.json`
 
 ### Swagger/OpenAPI Documentation
 
