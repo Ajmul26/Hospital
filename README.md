@@ -1,12 +1,13 @@
-# Spring Boot CRUD Application with H2 Database
+# Full Stack User Management Application
 
-A comprehensive Spring Boot application demonstrating CRUD (Create, Read, Update, Delete) operations using H2 in-memory database.
+A comprehensive full-stack application demonstrating modern web development practices with a Spring Boot backend and React frontend, featuring complete CRUD operations, security scanning, and production-ready deployment capabilities.
 
 ## Features
 
+### Backend (Spring Boot)
 - ✅ Complete CRUD operations for User management
 - ✅ H2 in-memory database integration
-- ✅ RESTful API endpoints
+- ✅ RESTful API endpoints with comprehensive search
 - ✅ Input validation using Bean Validation
 - ✅ Global exception handling
 - ✅ Sample data initialization
@@ -14,9 +15,23 @@ A comprehensive Spring Boot application demonstrating CRUD (Create, Read, Update
 - ✅ H2 Console for database inspection
 - ✅ Swagger/OpenAPI 3 documentation with interactive UI
 - ✅ Veracode security scanning integration (SAST, SCA, Pipeline Scan)
+- ✅ CORS configuration for frontend integration
+
+### Frontend (React)
+- ✅ Modern React 18 with TypeScript
+- ✅ Material-UI design system with custom theming
+- ✅ Responsive dashboard with statistics and quick actions
+- ✅ User list with search, sort, and pagination (DataGrid)
+- ✅ Form-based user creation and editing with validation
+- ✅ Real-time form validation with Yup schema
+- ✅ Toast notifications for user feedback
+- ✅ Error handling with user-friendly messages
+- ✅ Mobile-responsive design with breakpoint system
+- ✅ User detail view with contact actions
 
 ## Technology Stack
 
+### Backend
 - **Java 17**
 - **Spring Boot 3.2.0**
 - **Spring Data JPA**
@@ -26,6 +41,15 @@ A comprehensive Spring Boot application demonstrating CRUD (Create, Read, Update
 - **Swagger/OpenAPI 3** (SpringDoc)
 - **Veracode** (Security Scanning)
 - **OWASP Dependency Check** (Vulnerability Analysis)
+
+### Frontend
+- **React 18** with TypeScript
+- **Material-UI v5** (MUI)
+- **React Router v6** (Routing)
+- **React Hook Form** (Form management)
+- **Yup** (Schema validation)
+- **Axios** (HTTP client)
+- **React Toastify** (Notifications)
 
 ## Project Structure
 
@@ -119,35 +143,78 @@ Content-Type: application/json
 GET /api/users/search?term=john
 ```
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
-- Java 17 or higher
-- Maven 3.6 or higher
+- **Java 17** or higher
+- **Maven 3.6** or higher  
+- **Node.js 16** or higher
+- **npm** (comes with Node.js)
 
-### Running the Application
+### Option 1: Quick Start (Recommended)
 
-1. **Clone the repository**
 ```bash
+# Clone the repository
 git clone <repository-url>
-cd spring-crud-h2
+cd user-management-fullstack
+
+# Start both backend and frontend with one command
+./start-full-stack.sh
 ```
 
-2. **Build the application**
+**That's it!** The script automatically:
+- ✅ Checks all prerequisites
+- ✅ Builds the Spring Boot backend
+- ✅ Installs React dependencies  
+- ✅ Starts both services
+- ✅ Shows access URLs
+
+### Option 2: Manual Setup
+
+#### Backend (Spring Boot)
 ```bash
-mvn clean compile
+# Build and run backend
+mvn clean spring-boot:run
 ```
 
-3. **Run the application**
+#### Frontend (React)
 ```bash
-mvn spring-boot:run
+# Install dependencies and start frontend
+cd frontend/user-management
+npm install
+npm start
 ```
 
 4. **Access the application**
-- API Base URL: `http://localhost:8080/api/users`
+
+### Backend URLs
+- **API Base URL**: `http://localhost:8080/api/users`
 - **Swagger UI**: `http://localhost:8080/swagger-ui/index.html`
 - **OpenAPI Docs**: `http://localhost:8080/v3/api-docs`
-- H2 Console: `http://localhost:8080/h2-console`
+- **H2 Console**: `http://localhost:8080/h2-console`
+
+### Frontend Setup
+
+1. **Navigate to the frontend directory**:
+   ```bash
+   cd frontend/user-management
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Start the React development server**:
+   ```bash
+   npm start
+   ```
+
+4. **Access the frontend**:
+   - **React App**: `http://localhost:3000`
+   - **Dashboard**: `http://localhost:3000/`
+   - **User List**: `http://localhost:3000/users`
+   - **Add User**: `http://localhost:3000/users/new`
 
 ### Security Scanning
 

@@ -78,6 +78,11 @@ results.json
 .veracode/
 veracode-credentials.properties
 
+### Full Stack Application ###
+backend.log
+frontend.log
+*.pid
+
 ### Application Logs ###
 logs/
 spring.log

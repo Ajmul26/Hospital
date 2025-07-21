@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -239,11 +240,14 @@ public class UserController {
     /**
      * Health check endpoint
      */
+    @Operation(summary = "API health check", description = "Check if the API is running and database is accessible")
+    @ApiResponse(responseCode = "200", description = "API is healthy")
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> healthCheck() {
         Map<String, String> response = new HashMap<>();
         response.put("status", "UP");
         response.put("service", "User Service");
+        response.put("timestamp", LocalDateTime.now().toString());
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
