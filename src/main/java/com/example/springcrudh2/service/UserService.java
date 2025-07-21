@@ -17,6 +17,9 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private SplunkService splunkService;
+    
     /**
      * Create a new user
      */
@@ -32,7 +35,22 @@ public class UserService {
         user.setPhone(userRequest.getPhone());
         
         User savedUser = userRepository.save(user);
-        return new UserResponse(savedUser);
+        UserResponse response = new UserResponse(savedUser);
+        
+        // Log user creation to Splunk
+        try {
+            java.util.Map<String, Object> details = new java.util.HashMap<>();
+            details.put("user_name", savedUser.getName());
+            details.put("user_phone", savedUser.getPhone());
+            details.put("created_at", savedUser.getCreatedAt());
+            
+            splunkService.sendUserEvent("CREATE", savedUser.getId(), savedUser.getEmail(), details);
+        } catch (Exception e) {
+            // Don't fail the operation if Splunk logging fails
+            System.err.println("Failed to log user creation to Splunk: " + e.getMessage());
+        }
+        
+        return response;
     }
     
     /**
@@ -61,6 +79,11 @@ public class UserService {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
         
+        // Store original values for logging
+        String originalName = existingUser.getName();
+        String originalEmail = existingUser.getEmail();
+        String originalPhone = existingUser.getPhone();
+        
         // Check if email is being changed and if new email already exists
         if (!existingUser.getEmail().equals(userRequest.getEmail()) 
             && userRepository.existsByEmail(userRequest.getEmail())) {
@@ -72,17 +95,52 @@ public class UserService {
         existingUser.setPhone(userRequest.getPhone());
         
         User updatedUser = userRepository.save(existingUser);
-        return new UserResponse(updatedUser);
+        UserResponse response = new UserResponse(updatedUser);
+        
+        // Log user update to Splunk
+        try {
+            java.util.Map<String, Object> details = new java.util.HashMap<>();
+            details.put("original_name", originalName);
+            details.put("new_name", updatedUser.getName());
+            details.put("original_email", originalEmail);
+            details.put("new_email", updatedUser.getEmail());
+            details.put("original_phone", originalPhone);
+            details.put("new_phone", updatedUser.getPhone());
+            details.put("updated_at", updatedUser.getUpdatedAt());
+            
+            splunkService.sendUserEvent("UPDATE", updatedUser.getId(), updatedUser.getEmail(), details);
+        } catch (Exception e) {
+            System.err.println("Failed to log user update to Splunk: " + e.getMessage());
+        }
+        
+        return response;
     }
     
     /**
      * Delete user by ID
      */
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found with id: " + id);
-        }
+        // Get user details before deletion for logging
+        User userToDelete = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        
+        String deletedUserName = userToDelete.getName();
+        String deletedUserEmail = userToDelete.getEmail();
+        
         userRepository.deleteById(id);
+        
+        // Log user deletion to Splunk
+        try {
+            java.util.Map<String, Object> details = new java.util.HashMap<>();
+            details.put("deleted_user_name", deletedUserName);
+            details.put("deleted_user_phone", userToDelete.getPhone());
+            details.put("deleted_at", java.time.Instant.now().toString());
+            details.put("original_created_at", userToDelete.getCreatedAt());
+            
+            splunkService.sendUserEvent("DELETE", id, deletedUserEmail, details);
+        } catch (Exception e) {
+            System.err.println("Failed to log user deletion to Splunk: " + e.getMessage());
+        }
     }
     
     /**

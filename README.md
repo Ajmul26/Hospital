@@ -15,6 +15,7 @@ A comprehensive full-stack application demonstrating modern web development prac
 - ✅ H2 Console for database inspection
 - ✅ Swagger/OpenAPI 3 documentation with interactive UI
 - ✅ Veracode security scanning integration (SAST, SCA, Pipeline Scan)
+- ✅ Splunk integration for logging, monitoring, and analytics
 - ✅ CORS configuration for frontend integration
 
 ### Frontend (React)
@@ -41,6 +42,7 @@ A comprehensive full-stack application demonstrating modern web development prac
 - **Swagger/OpenAPI 3** (SpringDoc)
 - **Veracode** (Security Scanning)
 - **OWASP Dependency Check** (Vulnerability Analysis)
+- **Splunk** (Logging and Monitoring)
 
 ### Frontend
 - **React 18** with TypeScript
@@ -70,11 +72,22 @@ src/
 │   │   ├── controller/
 │   │   │   ├── UserController.java          # REST controller
 │   │   │   └── GlobalExceptionHandler.java  # Exception handling
-│   │   └── config/
-│   │       ├── DataInitializer.java         # Sample data setup
-│   │       └── OpenApiConfig.java           # Swagger/OpenAPI configuration
+│   │   ├── config/
+│   │   │   ├── DataInitializer.java         # Sample data setup
+│   │   │   ├── OpenApiConfig.java           # Swagger/OpenAPI configuration
+│   │   │   ├── SplunkConfig.java           # Splunk integration configuration
+│   │   │   └── WebConfig.java               # Web MVC configuration
+│   │   ├── service/
+│   │   │   └── SplunkService.java           # Splunk logging service
+│   │   ├── interceptor/
+│   │   │   └── SplunkLoggingInterceptor.java # HTTP request logging
+│   │   ├── scheduler/
+│   │   │   └── SplunkMetricsScheduler.java   # Scheduled metrics collection
+│   │   └── controller/
+│   │       └── SplunkController.java         # Splunk management API
 │   ├── scripts/
 │   │   └── veracode-scan.sh                 # Security scanning script
+│   ├── SPLUNK_INTEGRATION.md               # Splunk setup guide
 │   └── resources/
 │       └── application.properties           # Configuration
 └── test/

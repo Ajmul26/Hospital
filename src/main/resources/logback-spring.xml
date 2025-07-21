@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    
+    <!-- Console appender for development -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- File appender for local logging -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/spring-boot-app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/spring-boot-app.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- JSON appender for structured logging -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/spring-boot-app-json.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/spring-boot-app-json.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>true</includeContext>
+            <includeMdc>true</includeMdc>
+            <customFields>{"application":"spring-boot-user-management","environment":"${spring.profiles.active:-default}"}</customFields>
+        </encoder>
+    </appender>
+    
+    <!-- Splunk HEC appender (conditional) -->
+    <springProfile name="!test">
+        <if condition='property("splunk.enabled").equals("true")'>
+            <then>
+                <appender name="SPLUNK_HEC" class="com.splunk.logging.logback.HttpEventCollectorLogbackAppender">
+                    <url>${splunk.hec.url}/services/collector</url>
+                    <token>${splunk.hec.token}</token>
+                    <index>${splunk.index}</index>
+                    <source>${splunk.source}</source>
+                    <sourcetype>${splunk.sourcetype}</sourcetype>
+                    <disableCertificateValidation>${splunk.hec.disable-certificate-validation:false}</disableCertificateValidation>
+                    <batchInterval>${splunk.hec.batch-interval:10000}</batchInterval>
+                    <batchSize>${splunk.hec.batch-size:100}</batchSize>
+                    <batchCount>${splunk.hec.batch-count:10}</batchCount>
+                    <retryCount>${splunk.hec.retry-count:3}</retryCount>
+                    
+                    <layout class="ch.qos.logback.classic.PatternLayout">
+                        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+                    </layout>
+                    
+                    <!-- Only send ERROR and WARN logs to Splunk by default -->
+                    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                        <level>WARN</level>
+                    </filter>
+                </appender>
+            </then>
+        </if>
+    </springProfile>
+    
+    <!-- Root logger configuration -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <if condition='property("splunk.enabled").equals("true")'>
+            <then>
+                <appender-ref ref="SPLUNK_HEC" />
+            </then>
+        </if>
+    </root>
+    
+    <!-- Application specific loggers -->
+    <logger name="com.example.springcrudh2" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="JSON_FILE" />
+        <if condition='property("splunk.enabled").equals("true")'>
+            <then>
+                <appender-ref ref="SPLUNK_HEC" />
+            </then>
+        </if>
+    </logger>
+    
+    <!-- Splunk service logger (reduce noise) -->
+    <logger name="com.example.springcrudh2.service.SplunkService" level="WARN" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+    
+    <!-- HTTP request logging -->
+    <logger name="com.example.springcrudh2.interceptor.SplunkLoggingInterceptor" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="JSON_FILE" />
+    </logger>
+    
+    <!-- Security event logging -->
+    <logger name="security" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="JSON_FILE" />
+        <if condition='property("splunk.enabled").equals("true")'>
+            <then>
+                <appender-ref ref="SPLUNK_HEC" />
+            </then>
+        </if>
+    </logger>
+    
+    <!-- Performance logging -->
+    <logger name="performance" level="INFO" additivity="false">
+        <appender-ref ref="JSON_FILE" />
+        <if condition='property("splunk.enabled").equals("true")'>
+            <then>
+                <appender-ref ref="SPLUNK_HEC" />
+            </then>
+        </if>
+    </logger>
+    
+    <!-- Reduce Spring framework noise -->
+    <logger name="org.springframework" level="WARN" />
+    <logger name="org.hibernate" level="WARN" />
+    <logger name="org.apache.http" level="WARN" />
+    
+    <!-- Actuator metrics logging -->
+    <logger name="org.springframework.boot.actuate" level="INFO" />
+    
+</configuration>

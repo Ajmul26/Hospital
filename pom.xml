@@ -48,6 +48,45 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         
+        <!-- Splunk Logging for Java -->
+        <dependency>
+            <groupId>com.splunk.logging</groupId>
+            <artifactId>splunk-library-javalogging</artifactId>
+            <version>1.11.8</version>
+        </dependency>
+        
+        <!-- Logback Splunk Appender -->
+        <dependency>
+            <groupId>com.splunk.logging</groupId>
+            <artifactId>splunk-library-javalogging</artifactId>
+            <version>1.11.8</version>
+            <classifier>with-dependencies</classifier>
+        </dependency>
+        
+        <!-- Spring Boot Actuator for Metrics -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        
+        <!-- Micrometer Prometheus for Metrics -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        
+        <!-- Jackson for JSON formatting -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        
+        <!-- HTTP Client for Splunk HEC -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
+        
         <!-- Spring Boot Test Starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
