@@ -1,15 +1,28 @@
 package com.example.springcrudh2.dto;
 
 import com.example.springcrudh2.entity.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
+@Schema(description = "User response data")
 public class UserResponse {
     
+    @Schema(description = "User's unique identifier", example = "1")
     private Long id;
+    
+    @Schema(description = "User's full name", example = "John Doe")
     private String name;
+    
+    @Schema(description = "User's email address", example = "john.doe@example.com")
     private String email;
+    
+    @Schema(description = "User's phone number", example = "+1234567890")
     private String phone;
+    
+    @Schema(description = "User creation timestamp", example = "2023-12-21T10:30:00")
     private LocalDateTime createdAt;
+    
+    @Schema(description = "User last update timestamp", example = "2023-12-21T15:45:00")
     private LocalDateTime updatedAt;
     
     // Constructors

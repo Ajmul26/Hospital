@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.example.springcrudh2.SpringCrudH2ApplicationTests
--------------------------------------------------------------------------------
-Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.322 s -- in com.example.springcrudh2.SpringCrudH2ApplicationTests

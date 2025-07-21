@@ -3,6 +3,13 @@ package com.example.springcrudh2.controller;
 import com.example.springcrudh2.dto.UserRequest;
 import com.example.springcrudh2.dto.UserResponse;
 import com.example.springcrudh2.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
+@Tag(name = "User Management", description = "API for managing users in the system")
 public class UserController {
     
     @Autowired
@@ -24,8 +32,19 @@ public class UserController {
     /**
      * CREATE - Create a new user
      */
+    @Operation(summary = "Create a new user", description = "Creates a new user in the system")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "User created successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "409", description = "Email already exists",
+                    content = @Content(mediaType = "application/json"))
+    })
     @PostMapping
-    public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest userRequest) {
+    public ResponseEntity<?> createUser(
+            @Parameter(description = "User data to create", required = true)
+            @Valid @RequestBody UserRequest userRequest) {
         try {
             UserResponse createdUser = userService.createUser(userRequest);
             return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
@@ -39,6 +58,11 @@ public class UserController {
     /**
      * READ - Get all users
      */
+    @Operation(summary = "Get all users", description = "Retrieves a list of all users in the system")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Users retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    })
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<UserResponse> users = userService.getAllUsers();
@@ -48,8 +72,17 @@ public class UserController {
     /**
      * READ - Get user by ID
      */
+    @Operation(summary = "Get user by ID", description = "Retrieves a specific user by their ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json"))
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+    public ResponseEntity<?> getUserById(
+            @Parameter(description = "ID of the user to retrieve", required = true, example = "1")
+            @PathVariable Long id) {
         try {
             UserResponse user = userService.getUserById(id);
             return new ResponseEntity<>(user, HttpStatus.OK);
@@ -63,9 +96,23 @@ public class UserController {
     /**
      * UPDATE - Update user by ID
      */
+    @Operation(summary = "Update user", description = "Updates an existing user by their ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User updated successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "409", description = "Email already exists",
+                    content = @Content(mediaType = "application/json"))
+    })
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Long id, 
-                                       @Valid @RequestBody UserRequest userRequest) {
+    public ResponseEntity<?> updateUser(
+            @Parameter(description = "ID of the user to update", required = true, example = "1")
+            @PathVariable Long id,
+            @Parameter(description = "Updated user data", required = true)
+            @Valid @RequestBody UserRequest userRequest) {
         try {
             UserResponse updatedUser = userService.updateUser(id, userRequest);
             return new ResponseEntity<>(updatedUser, HttpStatus.OK);
@@ -81,8 +128,17 @@ public class UserController {
     /**
      * DELETE - Delete user by ID
      */
+    @Operation(summary = "Delete user", description = "Deletes a user by their ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User deleted successfully",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json"))
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUser(
+            @Parameter(description = "ID of the user to delete", required = true, example = "1")
+            @PathVariable Long id) {
         try {
             userService.deleteUser(id);
             Map<String, String> response = new HashMap<>();
@@ -98,8 +154,17 @@ public class UserController {
     /**
      * GET user by email
      */
+    @Operation(summary = "Get user by email", description = "Retrieves a user by their email address")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json"))
+    })
     @GetMapping("/email/{email}")
-    public ResponseEntity<?> getUserByEmail(@PathVariable String email) {
+    public ResponseEntity<?> getUserByEmail(
+            @Parameter(description = "Email of the user to retrieve", required = true, example = "john.doe@example.com")
+            @PathVariable String email) {
         try {
             UserResponse user = userService.getUserByEmail(email);
             return new ResponseEntity<>(user, HttpStatus.OK);
@@ -113,8 +178,15 @@ public class UserController {
     /**
      * SEARCH users by name or email
      */
+    @Operation(summary = "Search users", description = "Search users by name or email containing the search term")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Search results",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    })
     @GetMapping("/search")
-    public ResponseEntity<List<UserResponse>> searchUsers(@RequestParam String term) {
+    public ResponseEntity<List<UserResponse>> searchUsers(
+            @Parameter(description = "Search term to find users by name or email", required = true, example = "john")
+            @RequestParam String term) {
         List<UserResponse> users = userService.searchUsers(term);
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
@@ -122,8 +194,15 @@ public class UserController {
     /**
      * GET users by name containing
      */
+    @Operation(summary = "Get users by name", description = "Retrieves users whose name contains the given string")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Users found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    })
     @GetMapping("/name/{name}")
-    public ResponseEntity<List<UserResponse>> getUsersByNameContaining(@PathVariable String name) {
+    public ResponseEntity<List<UserResponse>> getUsersByNameContaining(
+            @Parameter(description = "Name pattern to search for", required = true, example = "John")
+            @PathVariable String name) {
         List<UserResponse> users = userService.getUsersByNameContaining(name);
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
@@ -131,8 +210,15 @@ public class UserController {
     /**
      * CHECK if email exists
      */
+    @Operation(summary = "Check if email exists", description = "Checks whether an email address is already registered")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Email existence status",
+                    content = @Content(mediaType = "application/json"))
+    })
     @GetMapping("/exists/email/{email}")
-    public ResponseEntity<Map<String, Boolean>> checkEmailExists(@PathVariable String email) {
+    public ResponseEntity<Map<String, Boolean>> checkEmailExists(
+            @Parameter(description = "Email to check for existence", required = true, example = "john.doe@example.com")
+            @PathVariable String email) {
         boolean exists = userService.existsByEmail(email);
         Map<String, Boolean> response = new HashMap<>();
         response.put("exists", exists);

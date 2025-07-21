@@ -4,6 +4,7 @@
 /workspace/src/main/java/com/example/springcrudh2/SpringCrudH2Application.java
 /workspace/src/main/java/com/example/springcrudh2/config/DataInitializer.java
 /workspace/src/main/java/com/example/springcrudh2/controller/GlobalExceptionHandler.java
+/workspace/src/main/java/com/example/springcrudh2/config/OpenApiConfig.java
 /workspace/src/main/java/com/example/springcrudh2/service/UserService.java
 /workspace/src/main/java/com/example/springcrudh2/controller/UserController.java
 /workspace/src/main/java/com/example/springcrudh2/dto/UserResponse.java

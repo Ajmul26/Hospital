@@ -12,6 +12,7 @@ A comprehensive Spring Boot application demonstrating CRUD (Create, Read, Update
 - ✅ Sample data initialization
 - ✅ Comprehensive test coverage
 - ✅ H2 Console for database inspection
+- ✅ Swagger/OpenAPI 3 documentation with interactive UI
 
 ## Technology Stack
 
@@ -21,6 +22,7 @@ A comprehensive Spring Boot application demonstrating CRUD (Create, Read, Update
 - **H2 Database**
 - **Maven**
 - **JUnit 5**
+- **Swagger/OpenAPI 3** (SpringDoc)
 
 ## Project Structure
 
@@ -42,7 +44,8 @@ src/
 │   │   │   ├── UserController.java          # REST controller
 │   │   │   └── GlobalExceptionHandler.java  # Exception handling
 │   │   └── config/
-│   │       └── DataInitializer.java         # Sample data setup
+│   │       ├── DataInitializer.java         # Sample data setup
+│   │       └── OpenApiConfig.java           # Swagger/OpenAPI configuration
 │   └── resources/
 │       └── application.properties           # Configuration
 └── test/
@@ -137,7 +140,22 @@ mvn spring-boot:run
 
 4. **Access the application**
 - API Base URL: `http://localhost:8080/api/users`
+- **Swagger UI**: `http://localhost:8080/swagger-ui/index.html`
+- **OpenAPI Docs**: `http://localhost:8080/v3/api-docs`
 - H2 Console: `http://localhost:8080/h2-console`
+
+### Swagger/OpenAPI Documentation
+
+Access the interactive API documentation at `http://localhost:8080/swagger-ui/index.html`
+
+**Features:**
+- Interactive API testing interface
+- Complete endpoint documentation
+- Request/response schemas with examples
+- Try-it-out functionality for all endpoints
+- Automatic curl command generation
+
+For raw OpenAPI JSON specification: `http://localhost:8080/v3/api-docs`
 
 ### H2 Database Console
 
