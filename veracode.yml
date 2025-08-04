@@ -1,0 +1,195 @@
+version: "2.0"
+
+# Veracode Static Application Security Testing (SAST) Configuration
+# for Telecommunications Network Optimizer Application
+
+# Application Information
+application:
+  name: "Telecommunications Network Optimizer"
+  version: "${BUILD_VERSION:-1.0.0}"
+  description: "Web application for enhancing telecommunications network efficiency and performance"
+  business_unit: "Telecommunications"
+  teams: ["Network Engineering", "DevOps", "Security"]
+
+# Scan Configuration
+scan:
+  # Application files to scan
+  include:
+    - "target/*.jar"           # Spring Boot JAR file
+    - "frontend/build/**/*"    # React build artifacts
+    - "src/**/*.java"         # Java source files
+    - "frontend/src/**/*.{js,jsx,ts,tsx}" # React source files
+  
+  # Files to exclude from scanning
+  exclude:
+    - "**/*test*/**"          # Test files
+    - "**/node_modules/**"    # Node.js dependencies
+    - "**/target/classes/**"  # Compiled classes (scan JAR instead)
+    - "**/*.log"             # Log files
+    - "**/*.md"              # Documentation files
+    - "**/logs/**"           # Log directories
+
+  # Scan modules configuration
+  modules:
+    - name: "Backend API"
+      path: "target/*.jar"
+      type: "Java"
+      entry_points:
+        - "com.telecom.networkoptimizer.NetworkOptimizerApplication"
+    
+    - name: "Frontend UI"
+      path: "frontend/build"
+      type: "JavaScript"
+      entry_points:
+        - "static/js/main.*.js"
+
+# Security Policy Configuration
+security:
+  # Compliance standards
+  compliance:
+    - "OWASP Top 10"
+    - "CWE/SANS Top 25"
+    - "PCI DSS"
+    - "ISO 27001"
+  
+  # Severity thresholds
+  thresholds:
+    very_high: 0    # Fail build if any Very High severity flaws
+    high: 5         # Allow up to 5 High severity flaws
+    medium: 20      # Allow up to 20 Medium severity flaws
+    low: 100        # Allow up to 100 Low severity flaws
+  
+  # Policy rules
+  policy:
+    fail_on_new_flaws: true
+    fail_on_severity_threshold: true
+    require_policy_compliance: true
+
+# Veracode platform settings
+platform:
+  # API credentials (use environment variables)
+  api_id: "${VERACODE_API_ID}"
+  api_key: "${VERACODE_API_KEY}"
+  
+  # Sandbox settings for development
+  sandbox:
+    enabled: true
+    name: "Development"
+    auto_recreate: true
+  
+  # Pipeline scan settings
+  pipeline_scan:
+    enabled: true
+    fail_on_severity: "Medium"
+    fail_on_cwe: 
+      - "89"   # SQL Injection
+      - "79"   # Cross-site Scripting
+      - "22"   # Path Traversal
+      - "352"  # Cross-Site Request Forgery
+      - "611"  # XML External Entity
+  
+  # Dynamic analysis settings
+  dynamic_analysis:
+    enabled: false  # Disabled for initial setup
+    target_url: "https://localhost:8080"
+    auth_required: true
+
+# Build integration
+build:
+  # Pre-scan preparation
+  prepare:
+    - "mvn clean compile"
+    - "mvn package -DskipTests"
+    - "cd frontend && npm install && npm run build"
+  
+  # Post-scan actions
+  post_scan:
+    - "echo 'Security scan completed'"
+    - "echo 'Review results in Veracode platform'"
+
+# Reporting configuration
+reporting:
+  # Output formats
+  formats:
+    - "xml"
+    - "json"
+    - "pdf"
+  
+  # Report delivery
+  delivery:
+    email:
+      enabled: true
+      recipients:
+        - "security@telecom-optimizer.com"
+        - "dev-team@telecom-optimizer.com"
+    
+    webhook:
+      enabled: false
+      url: "${WEBHOOK_URL}"
+  
+  # Custom report settings
+  custom:
+    include_source_code: false
+    include_remediation: true
+    group_by_cwe: true
+
+# Environment-specific configurations
+environments:
+  development:
+    scan_frequency: "on_commit"
+    sandbox: true
+    pipeline_scan: true
+    dynamic_analysis: false
+  
+  staging:
+    scan_frequency: "daily"
+    sandbox: false
+    pipeline_scan: true
+    dynamic_analysis: true
+  
+  production:
+    scan_frequency: "on_release"
+    sandbox: false
+    pipeline_scan: false
+    dynamic_analysis: true
+    policy_compliance_required: true
+
+# Integration settings
+integrations:
+  # CI/CD pipeline integration
+  jenkins:
+    enabled: true
+    plugin_version: "latest"
+  
+  github:
+    enabled: true
+    webhook_secret: "${GITHUB_WEBHOOK_SECRET}"
+    status_checks: true
+  
+  jira:
+    enabled: false
+    server_url: "${JIRA_SERVER_URL}"
+    project_key: "NETOPT"
+  
+  slack:
+    enabled: false
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    channel: "#security"
+
+# Custom flaw filtering
+flaw_filters:
+  # Suppress known false positives
+  suppress:
+    - cwe_id: "117"  # Improper Output Neutralization for Logs
+      reason: "Using structured logging with proper sanitization"
+    
+    - cwe_id: "209"  # Information Exposure Through Error Messages
+      reason: "Error messages are sanitized in production"
+  
+  # Custom severity overrides
+  severity_overrides:
+    - cwe_id: "89"   # SQL Injection
+      severity: "Very High"  # Always treat as critical
+    
+    - cwe_id: "79"   # XSS
+      severity: "Very High"  # Always treat as critical
